@@ -1,0 +1,77 @@
+version: '3'
+
+networks:
+  lv-world-cities-api:
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: nginx.dockerfile
+    container_name: world-cities-api
+    ports:
+      - 8011:80
+    volumes:
+      - ./src:/var/www/html:delegated
+    depends_on:
+      - php
+      - redis
+      - mysql
+    networks:
+      - lv-world-cities-api
+    links:
+      - "mysql:mysql"
+      - "redis:redis"
+
+  mysql:
+    image: mysql:5.7.29
+    container_name: world-cities-api-mysql
+    volumes:
+      - ~/.docker/mysql/world-cities-api:/var/lib/mysql
+    restart: unless-stopped
+    tty: true
+    ports:
+      - 3311:3306
+    environment:
+      MYSQL_DATABASE: geodb_world_cities
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: supersecret
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    networks:
+      - lv-world-cities-api
+
+  php:
+    build:
+      context: .
+      dockerfile: php.dockerfile
+    container_name: world-cities-api-php
+    volumes:
+      - ./src:/var/www/html:delegated
+    networks:
+      - lv-world-cities-api
+
+  redis:
+    image: redis:alpine
+    container_name: world-cities-api-redis
+    restart: unless-stopped
+    ports:
+      - 6311:6379
+    networks:
+      - lv-world-cities-api
+  
+  artisan:
+    build:
+      context: .
+      dockerfile: php.dockerfile
+    container_name: world-cities-api-artisan
+    volumes:
+      - ./src:/var/www/html:delegated
+    depends_on:
+      - mysql
+    working_dir: /var/www/html
+    user: laravel
+    entrypoint: ['php', '/var/www/html/artisan']
+    networks:
+      - lv-world-cities-api
