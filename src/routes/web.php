@@ -23,10 +23,10 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $namePrefix = request()->get('namePrefix');
 
         $subCountQuery = "SELECT count(city) AS 'total' FROM cities WHERE city_ascii LIKE '$namePrefix%' OR city LIKE '$namePrefix%'";
-        $query = "SELECT city, country FROM cities WHERE city_ascii LIKE '$namePrefix%' OR city LIKE '$namePrefix%'";
+        $query = "SELECT city, country FROM cities WHERE city_ascii LIKE '$namePrefix%' OR city LIKE '$namePrefix%' LIMIT $limit";
 
-        if (isset($offset) && !is_null($offset) && $offset > 1) {
-            $query = $query . " LIMIT " . $offset * $limit . ", $limit";
+        if (isset($offset) && !is_null($offset) && $offset > 0) {
+            $query = $query . " OFFSET " . $offset * $limit;
         }
 
         $sub_query_result = app('db')->select($subCountQuery);
